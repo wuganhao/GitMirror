@@ -1,0 +1,23 @@
+name: Push Build
+
+on:
+  pull_request:
+    types: [assigned, opened, synchronize, reopened]
+  push:
+    branches-ignore:
+      - 'feature/*' # Ignore build feature branch on push; feature branches will be build only for pull requests.
+      - 'Feature/*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Setup .NET Core CLI
+      uses: actions/setup-dotnet@v1.1.0
+
+    - name: Build
+      run: dotnet pack --configuration release src/GitMirror.sln -o dist -p:BUILD_NUMBER=${{ github.run_number }}
