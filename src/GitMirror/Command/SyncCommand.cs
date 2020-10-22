@@ -32,7 +32,8 @@ namespace WuGanhao.GitMirror.Command {
 
             Console.WriteLine("Fetching from source repository...");
             await source.FetchAsync(this.SourceBranch);
-            await repo.MergeAsync($"refs/{source.Name}/{this.SourceBranch}");
+            RemoteBranch sourceBranch = source.Branches.FirstOrDefault<RemoteBranch>(b => b.Name == this.SourceBranch);
+            await repo.MergeAsync(sourceBranch);
 
             return true;
         }

@@ -9,6 +9,7 @@
  *********************************************************************************************************************/
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
@@ -115,8 +116,49 @@ namespace WuGanhao.GitMirror {
             return exitCode;
         }
 
+
+        public static int Run(string filename, string arguments, out string[] output, string workingDirectory = null, bool ignoreExitCode = false) {
+            if (workingDirectory == null) {
+                workingDirectory = Directory.GetCurrentDirectory();
+            }
+
+            using Process process = new Process();
+            Console.WriteLine($"{workingDirectory}>{filename} {arguments}");
+
+            List<string> lines = new List<string>();
+
+            process.StartInfo.FileName = filename;
+            process.StartInfo.Arguments = arguments;
+            process.StartInfo.UseShellExecute = false;
+            process.StartInfo.RedirectStandardOutput = true;
+            process.StartInfo.RedirectStandardError = true;
+            process.StartInfo.WorkingDirectory = workingDirectory;
+            process.EnableRaisingEvents = true;
+            process.OutputDataReceived += (sender, args) => lines.Add(args.Data);
+            string error = string.Empty;
+            process.ErrorDataReceived += (sender, args) => {
+                error += args.Data;
+                Console.Error.WriteLine(args.Data);
+            };
+
+            process.Start();
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
+            process.WaitForExit();
+            int exitCode = process.ExitCode;
+
+            // Todo: Need to pass error handling callback method and the caller should decide handling the ExitCode
+            if (exitCode != 0 && !ignoreExitCode) {
+                throw new SystemException($"Failed executing command line '\"{filename}\" {arguments}' (Exit code: {exitCode})\n" + error);
+            }
+
+            output = lines.ToArray();
+
+            return exitCode;
+        }
+
         public static int Run(string filename, string arguments, string workingDirectory = null, bool ignoreExitCode = false) {
-            return Run(filename, arguments, out _, workingDirectory, ignoreExitCode);
+            return Run(filename, arguments, out string _, workingDirectory, ignoreExitCode);
         }
     }
 }
