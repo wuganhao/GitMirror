@@ -6,7 +6,6 @@
     <RootNamespace>WuGanhao.GitMirror</RootNamespace>
     <PackAsTool>True</PackAsTool>
     <PackageId>WuGanhao.GitMirror</PackageId>
-    <PackageVersion Condition="'$(PackageVersion)' == ''">1.0.0-build.$(BUILD_NUMBER)</PackageVersion>
   </PropertyGroup>
 
   <ItemGroup>

@@ -1,0 +1,29 @@
+name: Push Build
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  remove-feature:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        clean: true
+        fetch-depth: 1
+
+    - name: Show information
+      run: |
+        echo "Current git commit: $GITHUB_SHA"
+        echo "Current branch:     $GITHUB_HEAD_REF"
+        echo "Environment variables:"
+        export
+
+    - name: Remove feature branch
+      # Not deleting any release branch (*.*), master, develop or tags
+      if: "!startsWith(github.head_ref, '.') && github.head_ref != '/refs/master' && github.head_ref != '/refs/develop' && !startsWith(github.head_ref, '/refs/tags')"
+      run: |
+        git push origin --delete $GITHUB_HEAD_REF

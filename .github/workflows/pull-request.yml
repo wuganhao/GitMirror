@@ -20,4 +20,4 @@ jobs:
       uses: actions/setup-dotnet@v1.1.0
 
     - name: Build
-      run: dotnet msbuild -m -v:n -p:Configuration=Release src/GitMirror.sln
+      run: dotnet pack --configuration release src/GitMirror.sln -p:Version=1.0.0 --version-suffix "build.${{ github.run_number }}"
