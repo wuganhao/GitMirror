@@ -22,7 +22,7 @@ jobs:
         echo "Version: $Tag"
         echo "Informational Version: $InformationalVersion"
         echo "Package Version: $Tag"
-        dotnet pack --configuration release src/GitMirror.sln -o dist -p:AssemblyVersion=$Version -p:FileVersion=$Version -p:InformationalVersion=$InformationalVersion
+        dotnet pack --configuration release src/GitMirror.sln -o dist -p:AssemblyVersion=$Version -p:FileVersion=$Version -p:InformationalVersion=$InformationalVersion -p:PackageVersion=$Tag
         Get-ChildItem -Filter dist\*.nupkg | Rename-Item -NewName { $_.Name -replace '(WuGanhao\.GitMirror)\.(.+?)\.(nupkg)', '$1.$3' }
 
     - name: Push
