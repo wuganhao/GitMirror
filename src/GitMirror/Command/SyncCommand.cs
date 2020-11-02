@@ -97,7 +97,8 @@ namespace WuGanhao.GitMirror.Command {
             this.BRANCH_PATTERN = new Regex(this.BranchPattern, RegexOptions.Compiled | RegexOptions.Singleline);
 
             string rootDir = Path.GetFullPath(this.GirDir);
-            GitSyncJob root = new GitSyncJob("ROOT", rootDir, this.SourceUrl, this.Branch);
+            string branch = this.Branch.StartsWith("refs/heads/") ? this.Branch.Substring(11) : this.Branch;
+            GitSyncJob root = new GitSyncJob("ROOT", rootDir, this.SourceUrl, branch);
 
             Stack<GitSyncJob> stack = new Stack<GitSyncJob>();
             stack.Push(root);
