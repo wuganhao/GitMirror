@@ -59,6 +59,8 @@ namespace WuGanhao.GitMirror.Command {
             Console.WriteLine($"[{job.Name}] Fetching from source repository...");
             await source.FetchAsync(job.Branch);
 
+            Console.WriteLine($"[{job.Name}] Cleaning up working directory before merge ...");
+            await repo.CleanAsync();
             Console.WriteLine($"[{job.Name}] Merging branch: {job.Branch} ...");
             RemoteBranch sourceBranch = source.Branches.FirstOrDefault<RemoteBranch>(b => b.Name == job.Branch);
             if (sourceBranch == null) {

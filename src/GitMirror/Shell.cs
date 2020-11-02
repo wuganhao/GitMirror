@@ -56,7 +56,8 @@ namespace WuGanhao.GitMirror {
             process.StartInfo.RedirectStandardError = true;
             process.StartInfo.WorkingDirectory = workingDirectory;
             process.EnableRaisingEvents = true;
-            process.OutputDataReceived += (sender, args) => Console.Write(args.Data);
+            process.OutputDataReceived += (sender, args) => Console.WriteLine(args.Data);
+            process.ErrorDataReceived += (sender, args) => Console.WriteLine(args.Data);
             string error = string.Empty;
             process.ErrorDataReceived += (sender, args) => {
                 error += args.Data;
