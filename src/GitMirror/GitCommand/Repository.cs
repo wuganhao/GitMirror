@@ -2,10 +2,108 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace WuGanhao.GitMirror.GitCommand {
+
+    public class Submodule {
+        private Dictionary<string, string> _config;
+
+        public Submodule(Repository repo, string name, string path, string url, string branch, Dictionary<string, string> config) {
+            this.Repository = repo;
+            this.Name       = name;
+            this.Path       = path;
+            this.Url        = url;
+            this.Branch     = branch;
+            this._config    = config;
+        }
+
+        public Repository Repository { get; }
+
+        public string Name { get; }
+        public string Path { get; }
+        public string Url { get; }
+        public string Branch { get; }
+
+        public string this[string index] {
+            get { return this._config[index]; }
+        }
+
+        public async Task InitAsync() {
+            await this.Repository.ShellAsync("submodule", "init", "--update", this.Path);
+        }
+    }
+
+    public class SubmoduleCollection : IEnumerable<Submodule> {
+
+        public SubmoduleCollection(Repository repo) {
+            this.Repository = repo;
+        }
+
+        public Repository Repository { get; }
+
+        private static readonly Regex PATTERN_NAME = new Regex("\\s*\\[submodule\\s+\"(?<name>.+?)\"\\s*\\]\\s*", RegexOptions.Compiled | RegexOptions.Singleline);
+        private static readonly Regex PATTERN_KEYVALUE = new Regex("\\s*(?<key>.+?)\\s*=\\s*(?<value>.+?)\\s*", RegexOptions.Compiled | RegexOptions.Singleline);
+
+        public bool Configured => File.Exists(Path.Combine(this.Repository.BaseDirectory, ".gitmodules"));
+
+        public async Task InitAsync() {
+            await this.Repository.ShellAsync("init", "--update");
+        }
+
+        public IEnumerator<Submodule> GetEnumerator() {
+            using FileStream fs = new FileStream(
+                Path.Combine(this.Repository.BaseDirectory, ".gitmodules"), FileMode.Open, FileAccess.Read, FileShare.Read);
+
+            string url = null;
+            string name = null;
+            string branch = null;
+            string path = null;
+            Dictionary<string, string> config = new Dictionary<string, string>();
+
+            using StreamReader reader = new StreamReader(fs);
+
+            string line;
+            while((line = reader.ReadLine()) != null) {
+                Match m = PATTERN_NAME.Match(line);
+                if (m.Success) {
+                    Submodule sm = string.IsNullOrEmpty(name) ? null : new Submodule(this.Repository, name, path, url, branch, config);
+                    name = m.Groups["name"].Value;
+                    url = path = branch = null;
+                    config.Clear();
+                    yield return sm;
+                }
+
+                m = PATTERN_KEYVALUE.Match(line);
+                if (m.Success) {
+                    string key   = m.Groups["key"].Value;
+                    string value = m.Groups["value"].Value;
+
+                    switch (key) {
+                        case "path":
+                            path = value;
+                            break;
+
+                        case "url":
+                            url = value;
+                            break;
+
+                        case "branch":
+                            branch = value;
+                            break;
+
+                        default:
+                            config[key] = value;
+                            break;
+                    }
+                }
+            }
+        }
+
+        IEnumerator IEnumerable.GetEnumerator() => throw new System.NotImplementedException();
+    }
+
     public class Remote {
         public Remote(Repository repo, string name) {
             this.Repository = repo;
@@ -108,6 +206,8 @@ namespace WuGanhao.GitMirror.GitCommand {
         public async Task FetchAsync() {
             await this.Repository.FetchAsync(this.Remote.Name, this.Name);
         }
+
+        public override string ToString() => $"{this.Remote}/{this.Name}";
     }
 
     public class BranchCollection: IEnumerable<Branch> {
@@ -151,6 +251,18 @@ namespace WuGanhao.GitMirror.GitCommand {
                 yield return (RemoteBranch)branch;
             }
         }
+
+        public RemoteBranch this[string name] {
+            get {
+                this.Repository.Shell(out string[] lines, "ls-remote", this.Remote.Name, name);
+                lines = lines.Where(l => !string.IsNullOrWhiteSpace(l)).ToArray();
+                if (lines.Length <= 0) {
+                    return null;
+                }
+
+                return new RemoteBranch(this.Repository, this.Remote, name);
+            }
+        }
     }
 
     public class Repository {
@@ -169,6 +281,9 @@ namespace WuGanhao.GitMirror.GitCommand {
 
         private BranchCollection _branches;
         public BranchCollection Branches => this._branches ??= new BranchCollection(this);
+
+        private SubmoduleCollection _submodules;
+        public SubmoduleCollection Submodules => this._submodules ??= new SubmoduleCollection(this);
 
         public async Task<int> ShellAsync(string command, string args) =>
             await GitMirror.Shell.RunAsync("git", $"{command} {args}", this.BaseDirectory);
@@ -199,6 +314,8 @@ namespace WuGanhao.GitMirror.GitCommand {
         public async Task FetchAsync(string remote, string refs) => await this.ShellAsync("fetch", remote, refs);
         public async Task FetchAsync(string remote) => await this.ShellAsync("fetch", remote);
 
-        public async void Push (string remote, string refs) => await this.ShellAsync("push", remote, refs);
+        public async Task Push (string remote, string refs) => await this.ShellAsync("push", remote, refs);
+        public async Task Push (Remote remote, RemoteBranch branch) =>
+            await this.ShellAsync("push", remote.Name, $"refs/remotes/{branch.Remote.Name}/{branch.Name}:refs/heads/{branch.Name}");
     }
 }
