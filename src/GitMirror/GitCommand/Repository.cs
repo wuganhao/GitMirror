@@ -167,7 +167,7 @@ namespace WuGanhao.GitMirror.GitCommand {
         }
 
         public async Task<Remote> AddAsync(string name, string url) {
-            await Shell.RunAsync("git", $"remoate add {name} {url}");
+            await Shell.RunAsync("git", $"remote add {name} {url}");
             return new Remote(this.Repository, name);
         }
 
