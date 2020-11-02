@@ -61,6 +61,9 @@ namespace WuGanhao.GitMirror.Command {
 
             Console.WriteLine($"[{job.Name}] Merging branch: {job.Branch} ...");
             RemoteBranch sourceBranch = source.Branches.FirstOrDefault<RemoteBranch>(b => b.Name == job.Branch);
+            if (sourceBranch == null) {
+                throw new InvalidOperationException($"[{job.Name}] Failed to find remote branch on target: {job.Branch}");
+            }
             await repo.MergeAsync(sourceBranch);
 
             // Push for unmapped branches
