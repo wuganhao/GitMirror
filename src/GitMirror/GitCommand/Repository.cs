@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -240,8 +241,15 @@ namespace WuGanhao.GitMirror.GitCommand {
         public override IEnumerator<Branch> GetEnumerator() {
             this.Repository.Shell(out string[] lines, "ls-remote", this.Remote.Name);
             foreach (string line in lines) {
-                string l = line.Trim();
-                string branchName = l.TrimStart('*', ' ');
+                if (string.IsNullOrEmpty(line)) continue;
+                string[] fields = line.Split(new char[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+                if (fields.Length != 2) {
+                    continue;
+                }
+                string branchName = fields[1];
+                if (branchName.StartsWith("refs/heads/")) {
+                    branchName = branchName.Substring(11);
+                }
                 yield return new RemoteBranch(this.Repository, this.Remote, branchName);
             }
         }
