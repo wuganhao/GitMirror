@@ -35,6 +35,7 @@ namespace WuGanhao.GitMirror.Command {
         [CommandOption("source-url", "u", "Source reposity url to sync to")]
         public string SourceUrl { get; set; }
 
+        [CommandOption("pattern", "p", "Source reposity branches pattern to be discover")]
         public string BranchPattern { get; set; }
 
         private Regex BRANCH_PATTERN = null;
