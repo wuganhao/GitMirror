@@ -326,6 +326,6 @@ namespace WuGanhao.GitMirror.GitCommand {
         public async Task Push (Remote remote, RemoteBranch branch) =>
             await this.ShellAsync("push", remote.Name, $"refs/remotes/{branch.Remote.Name}/{branch.Name}:refs/heads/{branch.Name}");
         public async Task CleanAsync() =>
-            await this.ShellAsync("cleanup", "-dfx");
+            await this.ShellAsync("clean", "-dfx");
     }
 }
