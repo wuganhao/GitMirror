@@ -268,6 +268,18 @@ namespace WuGanhao.GitMirror.GitCommand {
                     return null;
                 }
 
+                string branchName = lines.Select(l => {
+                    string[] fields = l.Split(new char[] { ' ', '\t', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                    if (fields.Length != 2) {
+                        return null;
+                    }
+                    return fields[1];
+                }).Select(l => l.StartsWith("refs/heads/") ? l.Substring(11) : l)
+                .Where(n => n == name)
+                .FirstOrDefault();
+
+                if (branchName == null) return null;
+
                 return new RemoteBranch(this.Repository, this.Remote, name);
             }
         }
