@@ -70,7 +70,7 @@ namespace WuGanhao.GitMirror.Command {
             Console.WriteLine($"[{job.Name}] Create un-mapped branches ...");
             foreach (RemoteBranch branch in
                     source.Branches.Where<RemoteBranch>(b => BRANCH_PATTERN.IsMatch(b.Name))
-                    .Where(b => origin.Branches[b.Name] != null)) {
+                    .Where(b => origin.Branches[b.Name] is null)) {
                 Console.WriteLine($"[{job.Name}] Fetching {branch} ...");
                 await source.FetchAsync(branch.Name);
                 Console.WriteLine($"[{job.Name}] Pushing {branch} => origin ...");
