@@ -38,6 +38,9 @@ namespace WuGanhao.GitMirror.Command {
         [CommandOption("pattern", "p", "Source reposity branches pattern to be discover")]
         public string BranchPattern { get; set; }
 
+        [CommandOption("source-token", "t", "Access token for source repository if its from HTTP/HTTPS connection")]
+        public string SourceToken { get; set; }
+
         private Regex BRANCH_PATTERN = null;
 
         /// <summary>
@@ -53,8 +56,13 @@ namespace WuGanhao.GitMirror.Command {
                 throw new InvalidOperationException($"Cannot find remote origin for {job.Name}");
             }
 
-            Console.WriteLine($"[{job.Name}] Creating source link => {this.SourceUrl} ");
-            Remote source = repo.Remotes.Add("target", job.SourceUrl, true);
+            Console.WriteLine($"[{job.Name}] Creating source link => {job.SourceUrl} ");
+            Uri sourceUri = new Uri(job.SourceUrl);
+            string schema = sourceUri.Scheme.ToUpperInvariant();
+            if (!string.IsNullOrEmpty(this.SourceToken) && (schema == "HTTP" || schema == "HTTPS")) {
+                sourceUri = new Uri($"{sourceUri.Scheme}://{this.SourceToken}@{sourceUri.Host}:{sourceUri.Port}{sourceUri.PathAndQuery}");
+            }
+            Remote source = repo.Remotes.Add("source", sourceUri.ToString(), true);
 
             Console.WriteLine($"[{job.Name}] Fetching from source repository...");
             await source.FetchAsync(job.Branch);
