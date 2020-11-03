@@ -83,6 +83,7 @@ namespace WuGanhao.GitMirror.Command {
                     string sourceUrl = module["source-url"];
                     if (string.IsNullOrWhiteSpace(sourceUrl)) {
                         Console.WriteLine($"Skipping for {module.Name}: source-url not yet configured");
+                        continue;
                     }
 
                     await module.InitAsync();
@@ -103,8 +104,8 @@ namespace WuGanhao.GitMirror.Command {
             Stack<GitSyncJob> stack = new Stack<GitSyncJob>();
             stack.Push(root);
 
-            GitSyncJob current;
-            while ((current = stack.Pop()) != null) {
+            while (stack.Count > 0) {
+                GitSyncJob current = stack.Pop();
                 await foreach(GitSyncJob subJob in this.SyncAsync(current)) {
                     stack.Push(subJob);
                 }

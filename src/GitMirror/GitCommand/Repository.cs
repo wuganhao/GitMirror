@@ -44,8 +44,8 @@ namespace WuGanhao.GitMirror.GitCommand {
 
         public Repository Repository { get; }
 
-        private static readonly Regex PATTERN_NAME = new Regex("\\s*\\[submodule\\s+\"(?<name>.+?)\"\\s*\\]\\s*", RegexOptions.Compiled | RegexOptions.Singleline);
-        private static readonly Regex PATTERN_KEYVALUE = new Regex("\\s*(?<key>.+?)\\s*=\\s*(?<value>.+?)\\s*", RegexOptions.Compiled | RegexOptions.Singleline);
+        private static readonly Regex PATTERN_NAME = new Regex("^\\s*\\[submodule\\s+\"(?<name>.+?)\"\\s*\\]\\s*$", RegexOptions.Compiled | RegexOptions.Singleline);
+        private static readonly Regex PATTERN_KEYVALUE = new Regex("^\\s*(?<key>.+?)\\s*=\\s*(?<value>.+?)\\s*$", RegexOptions.Compiled | RegexOptions.Singleline);
 
         public bool Configured => File.Exists(Path.Combine(this.Repository.BaseDirectory, ".gitmodules"));
 
@@ -69,11 +69,15 @@ namespace WuGanhao.GitMirror.GitCommand {
             while((line = reader.ReadLine()) != null) {
                 Match m = PATTERN_NAME.Match(line);
                 if (m.Success) {
-                    Submodule sm = string.IsNullOrEmpty(name) ? null : new Submodule(this.Repository, name, path, url, branch, config);
-                    name = m.Groups["name"].Value;
-                    url = path = branch = null;
-                    config.Clear();
-                    yield return sm;
+                    if (name is null) { // First time
+                        name = m.Groups["name"].Value;
+                    } else {
+                        Submodule sm = string.IsNullOrEmpty(name) ? null : new Submodule(this.Repository, name, path, url, branch, config);
+                        name = m.Groups["name"].Value;
+                        url = path = branch = null;
+                        config.Clear();
+                        yield return sm;
+                    }
                 }
 
                 m = PATTERN_KEYVALUE.Match(line);
