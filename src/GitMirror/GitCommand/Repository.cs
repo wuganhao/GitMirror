@@ -27,8 +27,8 @@ namespace WuGanhao.GitMirror.GitCommand {
         public string Url { get; }
         public string Branch { get; }
 
-        public string this[string index] {
-            get { return this._config[index]; }
+        public string this[string key] {
+            get { return this._config.ContainsKey(key) ? this._config[key] : null; }
         }
 
         public async Task InitAsync() {
@@ -331,8 +331,8 @@ namespace WuGanhao.GitMirror.GitCommand {
         public async Task MergeAsync(RemoteBranch remoteBranch) =>
             await this.ShellAsync("merge", $"remotes/{remoteBranch.Remote.Name}/{remoteBranch.Name}");
 
-        public async Task FetchAsync(string remote, string refs) => await this.ShellAsync("fetch", "--progress", remote, refs);
-        public async Task FetchAsync(string remote) => await this.ShellAsync("fetch", "--progress", remote);
+        public async Task FetchAsync(string remote, string refs) => await this.ShellAsync("fetch", remote, refs);
+        public async Task FetchAsync(string remote) => await this.ShellAsync("fetch", remote);
 
         public async Task Push (string remote, string refs) => await this.ShellAsync("push", remote, refs);
         public async Task Push (Remote remote, RemoteBranch branch) =>
