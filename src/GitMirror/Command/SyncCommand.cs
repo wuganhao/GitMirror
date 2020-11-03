@@ -82,7 +82,7 @@ namespace WuGanhao.GitMirror.Command {
                 foreach (Submodule module in repo.Submodules) {
                     string sourceUrl = module["source-url"];
                     if (string.IsNullOrWhiteSpace(sourceUrl)) {
-                        Console.WriteLine($"Skipping for {module.Name}: source-url not yet configured");
+                        Console.WriteLine($"[{job.Name}] Skipping for {module.Name}: source-url not yet configured");
                         continue;
                     }
 
