@@ -67,6 +67,10 @@ namespace WuGanhao.GitMirror.Command {
             Remote source = repo.Remotes.Add("source", sourceUri.ToString(), true);
 
             Console.WriteLine($"[{jobName}] Fetching from source repository...");
+            if (source.Branches[job.Branch] == null) {
+                Console.WriteLine($"[{jobName}] Failed to find branch source: {job.Branch}...");
+                yield break;
+            }
             await source.FetchAsync(job.Branch);
 
             // for sub-modules, need to check correct branch first.
