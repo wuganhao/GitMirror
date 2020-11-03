@@ -208,7 +208,7 @@ namespace WuGanhao.GitMirror.GitCommand {
             await this.Repository.FetchAsync(this.Remote.Name, this.Name);
         }
 
-        public override string ToString() => $"{this.Remote}/{this.Name}";
+        public override string ToString() => $"refs/remotes/{this.Remote.Name}/{this.Name}";
     }
 
     public class BranchCollection: IEnumerable<Branch> {
