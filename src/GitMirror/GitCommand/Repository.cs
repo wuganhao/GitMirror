@@ -214,7 +214,7 @@ namespace WuGanhao.GitMirror.GitCommand {
         public string FullName => $"refs/remotes/{this.Remote.Name}/{this.Name}";
 
         public async Task FetchAsync() {
-            await this.Repository.FetchAsync(this.Remote.Name, this.Name);
+            await this.Repository.FetchAsync(this.Remote.Name, $"refs/heads/{this.Name}");
         }
 
         public override string ToString() => $"refs/remotes/{this.Remote.Name}/{this.Name}";
