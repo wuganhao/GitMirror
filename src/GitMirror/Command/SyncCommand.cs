@@ -107,6 +107,9 @@ namespace WuGanhao.GitMirror.Command {
             if (repo.Submodules.Configured) {
                 foreach (Submodule module in repo.Submodules) {
                     string sourceUrl = module["source-url"];
+                    if (string.Equals(module["ignore-mirror"], "TRUE", StringComparison.InvariantCultureIgnoreCase)) {
+                        continue;
+                    }
                     if (string.IsNullOrWhiteSpace(sourceUrl)) {
                         Console.WriteLine($"[{jobName}] Skipping for {module.Name}: source-url not yet configured");
                         continue;
