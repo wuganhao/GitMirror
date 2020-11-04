@@ -143,11 +143,25 @@ namespace WuGanhao.GitMirror.GitCommand {
             }
         }
 
+        public async Task PushAsync(RemoteBranch[] branches) {
+            await this.Repository.ShellAsync("push", this.Name,
+                string.Join(' ', branches.Select(b => $"{b.FullName}:refs/heads/{b.Name}")));
+        }
+
         private RemoteBranchCollection _branches;
         public RemoteBranchCollection Branches => this._branches ??= new RemoteBranchCollection(this.Repository, this);
 
         public async Task FetchAsync() {
             await this.Repository.FetchAsync(this.Name);
+        }
+
+        public async Task FetchAsync(params RemoteBranch[] branches) {
+            RemoteBranch other = branches.FirstOrDefault(b => b.Remote.Name != this.Name);
+            if (other != null) {
+                throw new InvalidOperationException($"Branch {other} is not from current remote");
+            }
+
+            await this.Repository.ShellAsync("fetch", this.Name, string.Join(' ', branches.Select(b => b.Name)) );
         }
 
         public async Task FetchAsync(string refs) {

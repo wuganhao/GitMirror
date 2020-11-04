@@ -94,14 +94,14 @@ namespace WuGanhao.GitMirror.Command {
 
             // Push for unmapped branches
             Console.WriteLine($"[{jobName}] Create un-mapped branches ...");
-            foreach (RemoteBranch branch in
-                    source.Branches.Where<RemoteBranch>(b => BRANCH_PATTERN.IsMatch(b.Name))
-                    .Where(b => origin.Branches[b.Name] is null)) {
-                Console.WriteLine($"[{jobName}] Fetching {branch} ...");
-                await branch.FetchAsync();
-                Console.WriteLine($"[{jobName}] Pushing {branch} => origin ...");
-                await repo.PushAsync(origin, branch);
-            }
+            RemoteBranch[] sourceBranches = source.Branches.Where<RemoteBranch>(b => BRANCH_PATTERN.IsMatch(b.Name)).ToArray();
+            RemoteBranch[] targetBranches = origin.Branches.Where<RemoteBranch>(b => BRANCH_PATTERN.IsMatch(b.Name)).ToArray();
+            RemoteBranch[] unmappedBranches = sourceBranches.Where(b => !targetBranches.Any(t => t.Name == b.Name)).ToArray();
+
+            Console.WriteLine($"[{jobName}] Fetching branches from source: {string.Join(';', unmappedBranches.Select(b => b.Name))} ...");
+            await source.FetchAsync(unmappedBranches);
+            Console.WriteLine($"[{jobName}] Pushing branches to origin: {string.Join(';', unmappedBranches.Select(b => b.Name))} ...");
+            await origin.PushAsync(unmappedBranches);
 
             // Check for submodules
             if (repo.Submodules.Configured) {
