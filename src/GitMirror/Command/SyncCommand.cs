@@ -84,7 +84,7 @@ namespace WuGanhao.GitMirror.Command {
                 RemoteBranch originBranch = origin.Branches[job.Branch];
                 if (originBranch != null) { // Could be empty when syncing for first time.
                     await originBranch.FetchAsync();
-                    await repo.CheckoutAsync(originBranch);
+                    await repo.CheckoutAsync(originBranch, true);
 
                     Console.WriteLine($"[{jobName}] Merging branch: {job.Branch} ...");
                     if (sourceBranch == null) {
