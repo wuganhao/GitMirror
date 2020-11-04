@@ -161,7 +161,7 @@ namespace WuGanhao.GitMirror.GitCommand {
                 throw new InvalidOperationException($"Branch {other} is not from current remote");
             }
 
-            await this.Repository.ShellAsync("fetch", this.Name, string.Join(' ', branches.Select(b => b.Name)) );
+            await this.Repository.ShellAsync("fetch", this.Name, string.Join(' ', branches.Select(b => $"refs/heads/{b.Name}")) );
         }
 
         public async Task FetchAsync(string refs) {
