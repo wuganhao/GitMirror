@@ -346,10 +346,10 @@ namespace WuGanhao.GitMirror.GitCommand {
         public async Task FetchAsync(string remote, string refs) => await this.ShellAsync("fetch", remote, refs);
         public async Task FetchAsync(string remote) => await this.ShellAsync("fetch", remote);
 
-        public async Task Push (string remote, string refs) => await this.ShellAsync("push", remote, refs);
-        public async Task Push (Remote remote, RemoteBranch branch) =>
+        public async Task PushAsync (string remote, string refs) => await this.ShellAsync("push", remote, refs);
+        public async Task PushAsync (Remote remote, RemoteBranch branch) =>
             await this.ShellAsync("push", remote.Name, $"refs/remotes/{branch.Remote.Name}/{branch.Name}:refs/heads/{branch.Name}");
-        public async Task Push(Remote remote, string refs) => await this.ShellAsync("push", remote.Name, $"HEAD:{refs}");
+        public async Task PushAsync(Remote remote, string refs) => await this.ShellAsync("push", remote.Name, $"HEAD:{refs}");
         public async Task CheckoutAsync(RemoteBranch originBranch) =>
             await this.ShellAsync("checkout", originBranch.FullName);
         public async Task CheckoutAsync(string branch, bool orphan = false) =>

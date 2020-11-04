@@ -90,7 +90,7 @@ namespace WuGanhao.GitMirror.Command {
                 throw new InvalidOperationException($"[{jobName}] Failed to find remote branch on target: {job.Branch}");
             }
             await repo.MergeAsync(sourceBranch);
-            await repo.Push(origin, job.Branch);
+            await repo.PushAsync(origin, job.Branch);
 
             // Push for unmapped branches
             Console.WriteLine($"[{jobName}] Create un-mapped branches ...");
@@ -98,9 +98,9 @@ namespace WuGanhao.GitMirror.Command {
                     source.Branches.Where<RemoteBranch>(b => BRANCH_PATTERN.IsMatch(b.Name))
                     .Where(b => origin.Branches[b.Name] is null)) {
                 Console.WriteLine($"[{jobName}] Fetching {branch} ...");
-                await source.FetchAsync(branch.Name);
+                await branch.FetchAsync();
                 Console.WriteLine($"[{jobName}] Pushing {branch} => origin ...");
-                await repo.Push(origin, branch);
+                await repo.PushAsync(origin, branch);
             }
 
             // Check for submodules
