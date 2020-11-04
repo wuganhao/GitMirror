@@ -10,12 +10,12 @@ using WuGanhao.GitMirror.GitCommand;
 
 namespace WuGanhao.GitMirror.Command {
     public class GitSyncJob {
-        public GitSyncJob(string name, string localFolder, string sourceUrl, /*string branchPattern,*/ string Branch) {
+        public GitSyncJob(string name, string localFolder, string sourceUrl, string targetUrl, string Branch) {
             this.Name          = name;
             this.LocalFolder   = localFolder;
             this.SourceUrl     = sourceUrl;
-            //this.BranchPattern = branchPattern;
-            this.Branch  = Branch;
+            this.TargetUrl     = targetUrl;
+            this.Branch        = Branch;
         }
 
         public string Name          { get; }
@@ -23,6 +23,7 @@ namespace WuGanhao.GitMirror.Command {
         public string SourceUrl     { get; }
         //public string BranchPattern { get; }
         public string Branch        { get; }
+        public string TargetUrl     { get; }
     }
 
     public class SyncCommand : SubCommand {
@@ -58,6 +59,10 @@ namespace WuGanhao.GitMirror.Command {
                 throw new InvalidOperationException($"[{jobName}] Cannot find remote origin for {job.Name}");
             }
 
+            if (job.TargetUrl != null) {
+                origin.FetchUrl = origin.PushUrl = job.TargetUrl;
+            }
+
             Console.WriteLine($"[{jobName}] Creating source link => {job.SourceUrl} ");
             Uri sourceUri = new Uri(job.SourceUrl);
             string schema = sourceUri.Scheme.ToUpperInvariant();
@@ -80,17 +85,15 @@ namespace WuGanhao.GitMirror.Command {
                 if (originBranch != null) { // Could be empty when syncing for first time.
                     await originBranch.FetchAsync();
                     await repo.CheckoutAsync(originBranch);
-                } else {
-                    await repo.CheckoutAsync(job.Branch, true);
+
+                    Console.WriteLine($"[{jobName}] Merging branch: {job.Branch} ...");
+                    if (sourceBranch == null) {
+                        throw new InvalidOperationException($"[{jobName}] Failed to find remote branch on target: {job.Branch}");
+                    }
+                    await repo.MergeAsync(sourceBranch);
+                    await repo.PushAsync(origin, job.Branch);
                 }
             }
-
-            Console.WriteLine($"[{jobName}] Merging branch: {job.Branch} ...");
-            if (sourceBranch == null) {
-                throw new InvalidOperationException($"[{jobName}] Failed to find remote branch on target: {job.Branch}");
-            }
-            await repo.MergeAsync(sourceBranch);
-            await repo.PushAsync(origin, job.Branch);
 
             // Push for unmapped branches
             Console.WriteLine($"[{jobName}] Create un-mapped branches ...");
@@ -98,10 +101,12 @@ namespace WuGanhao.GitMirror.Command {
             RemoteBranch[] targetBranches = origin.Branches.Where<RemoteBranch>(b => BRANCH_PATTERN.IsMatch(b.Name)).ToArray();
             RemoteBranch[] unmappedBranches = sourceBranches.Where(b => !targetBranches.Any(t => t.Name == b.Name)).ToArray();
 
-            Console.WriteLine($"[{jobName}] Fetching branches from source: {string.Join(';', unmappedBranches.Select(b => b.Name))} ...");
-            await source.FetchAsync(unmappedBranches);
-            Console.WriteLine($"[{jobName}] Pushing branches to origin: {string.Join(';', unmappedBranches.Select(b => b.Name))} ...");
-            await origin.PushAsync(unmappedBranches);
+            if (unmappedBranches.Length > 0) {
+                Console.WriteLine($"[{jobName}] Fetching branches from source: {string.Join(';', unmappedBranches.Select(b => b.Name))} ...");
+                await source.FetchAsync(unmappedBranches);
+                Console.WriteLine($"[{jobName}] Pushing branches to origin: {string.Join(';', unmappedBranches.Select(b => b.Name))} ...");
+                await origin.PushAsync(unmappedBranches);
+            }
 
             // Check for submodules
             if (repo.Submodules.Configured) {
@@ -118,7 +123,7 @@ namespace WuGanhao.GitMirror.Command {
                     await module.InitAsync();
                     await module.UpdateAsync();
                     yield return new GitSyncJob(module.Name, Path.Combine(job.LocalFolder, module.Path),
-                        module["source-url"], module.Branch);
+                        module["source-url"], module.Url, module.Branch);
                 }
             }
         }
@@ -129,7 +134,7 @@ namespace WuGanhao.GitMirror.Command {
 
             string rootDir = Path.GetFullPath(this.GirDir);
             string branch = this.Branch.StartsWith("refs/heads/") ? this.Branch.Substring(11) : this.Branch;
-            GitSyncJob root = new GitSyncJob(null, rootDir, this.SourceUrl, branch);
+            GitSyncJob root = new GitSyncJob(null, rootDir, this.SourceUrl, null, branch);
 
             Stack<GitSyncJob> stack = new Stack<GitSyncJob>();
             stack.Push(root);
