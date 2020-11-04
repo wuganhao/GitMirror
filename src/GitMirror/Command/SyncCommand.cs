@@ -86,7 +86,6 @@ namespace WuGanhao.GitMirror.Command {
             }
 
             Console.WriteLine($"[{jobName}] Merging branch: {job.Branch} ...");
-            RemoteBranch sourceBranch = source.Branches.FirstOrDefault<RemoteBranch>(b => b.Name == job.Branch);
             if (sourceBranch == null) {
                 throw new InvalidOperationException($"[{jobName}] Failed to find remote branch on target: {job.Branch}");
             }
