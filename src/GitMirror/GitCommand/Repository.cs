@@ -148,6 +148,11 @@ namespace WuGanhao.GitMirror.GitCommand {
                 string.Join(' ', branches.Select(b => $"{b.FullName}:refs/heads/{b.Name}")));
         }
 
+        public async Task PushAsync(RemoteBranch[] branches, Func<RemoteBranch, string> callbackGetRemoteName) {
+            await this.Repository.ShellAsync("push", this.Name,
+                string.Join(' ', branches.Select(b => $"{b.FullName}:refs/heads/{callbackGetRemoteName(b)}")));
+        }
+
         private RemoteBranchCollection _branches;
         public RemoteBranchCollection Branches => this._branches ??= new RemoteBranchCollection(this.Repository, this);
 
@@ -363,6 +368,13 @@ namespace WuGanhao.GitMirror.GitCommand {
         public async Task PushAsync (string remote, string refs) => await this.ShellAsync("push", remote, refs);
         public async Task PushAsync (Remote remote, RemoteBranch branch) =>
             await this.ShellAsync("push", remote.Name, $"refs/remotes/{branch.Remote.Name}/{branch.Name}:refs/heads/{branch.Name}");
+
+        /// <summary>
+        /// Push current HEAD revision to remote as refs.
+        /// </summary>
+        /// <param name="remote"></param>
+        /// <param name="refs"></param>
+        /// <returns></returns>
         public async Task PushAsync(Remote remote, string refs) => await this.ShellAsync("push", remote.Name, $"HEAD:refs/heads/{refs}");
         public async Task CheckoutAsync(RemoteBranch originBranch, bool force = false) =>
             await this.ShellAsync("checkout", originBranch.FullName, force ? "--force" : null);
