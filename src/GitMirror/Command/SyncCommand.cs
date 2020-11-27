@@ -49,7 +49,10 @@ namespace WuGanhao.GitMirror.Command {
         private Regex BRANCH_PATTERN = null;
 
         public string GetTargetBranch(string sourceBranch) {
-            if (string.IsNullOrEmpty(this.Prefix)) return sourceBranch;
+            if (string.IsNullOrEmpty(this.Prefix) ||
+                sourceBranch == "master" ||
+                sourceBranch == "develop" ) return sourceBranch;
+
             string sourceName = sourceBranch.Trim('/');
             string prefix = this.Prefix?.Trim('/');
 
@@ -110,12 +113,14 @@ namespace WuGanhao.GitMirror.Command {
                 }
             } else {
                 string targetBranchName = this.GetTargetBranch(job.Branch);
-                Console.WriteLine($"[{jobName}] Merging branch: {job.Branch} ...");
+                Console.WriteLine($"[{jobName}] Merging branch: {targetBranchName} ...");
                 if (sourceBranch == null) {
                     throw new InvalidOperationException($"[{jobName}] Failed to find remote branch on target: {job.Branch}");
                 }
                 RemoteBranch targetBranch = origin.Branches[targetBranchName];
-                await targetBranch.PullAsync();
+                if (targetBranch != null) {
+                    await targetBranch.PullAsync();
+                }
                 await repo.MergeAsync(sourceBranch);
                 await repo.PushAsync(origin, targetBranchName);
             }
