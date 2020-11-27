@@ -114,6 +114,8 @@ namespace WuGanhao.GitMirror.Command {
                 if (sourceBranch == null) {
                     throw new InvalidOperationException($"[{jobName}] Failed to find remote branch on target: {job.Branch}");
                 }
+                RemoteBranch targetBranch = origin.Branches[targetBranchName];
+                await targetBranch.PullAsync();
                 await repo.MergeAsync(sourceBranch);
                 await repo.PushAsync(origin, targetBranchName);
             }

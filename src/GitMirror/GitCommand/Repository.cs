@@ -236,6 +236,10 @@ namespace WuGanhao.GitMirror.GitCommand {
             await this.Repository.FetchAsync(this.Remote.Name, $"refs/heads/{this.Name}");
         }
 
+        public async Task PullAsync() {
+            await this.Repository.PullAsync(this.Remote.Name, $"refs/heads/{this.Name}");
+        }
+
         public override string ToString() => $"refs/remotes/{this.Remote.Name}/{this.Name}";
     }
 
@@ -364,6 +368,8 @@ namespace WuGanhao.GitMirror.GitCommand {
 
         public async Task FetchAsync(string remote, string refs) => await this.ShellAsync("fetch", remote, refs);
         public async Task FetchAsync(string remote) => await this.ShellAsync("fetch", remote);
+
+        public async Task PullAsync(string remote, string refs) => await this.ShellAsync("pull", remote, refs);
 
         public async Task PushAsync (string remote, string refs) => await this.ShellAsync("push", remote, refs);
         public async Task PushAsync (Remote remote, RemoteBranch branch) =>
