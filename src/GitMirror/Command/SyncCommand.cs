@@ -46,6 +46,9 @@ namespace WuGanhao.GitMirror.Command {
         [CommandOption("forced-prefix", "f", "Force a prefix in each merged branch in target repository")]
         public string Prefix { get; set; }
 
+        [CommandOption("delay", "e", "Delay in between synchronizing each repositories (in milliseconds)")]
+        public int Delay { get; set; } = 50;
+
         private Regex BRANCH_PATTERN = null;
 
         public string GetTargetBranch(string sourceBranch) {
@@ -175,6 +178,7 @@ namespace WuGanhao.GitMirror.Command {
                 await foreach(GitSyncJob subJob in this.SyncAsync(current)) {
                     stack.Push(subJob);
                 }
+                await Task.Delay(this.Delay);
             }
 
             return true;
