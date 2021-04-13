@@ -1,4 +1,4 @@
-name: Push Build
+name: Tagging Build
 
 on:
   push:
