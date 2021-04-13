@@ -363,8 +363,10 @@ namespace WuGanhao.GitMirror.GitCommand {
 
         public async Task MergeAsync (string refs) => await this.ShellAsync("merge", refs);
 
-        public async Task MergeAsync(RemoteBranch remoteBranch) =>
-            await this.ShellAsync("merge", $"remotes/{remoteBranch.Remote.Name}/{remoteBranch.Name}");
+        public async Task MergeAsync(RemoteBranch remoteBranch, bool allowUnrelatedHistories = false) =>
+            await this.ShellAsync("merge",
+                allowUnrelatedHistories ? "--[no-]allow-unrelated-histories" : null,
+                $"remotes/{remoteBranch.Remote.Name}/{remoteBranch.Name}");
 
         public async Task FetchAsync(string remote, string refs) => await this.ShellAsync("fetch", remote, refs);
         public async Task FetchAsync(string remote) => await this.ShellAsync("fetch", remote);
