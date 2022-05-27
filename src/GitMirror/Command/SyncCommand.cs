@@ -83,63 +83,66 @@ namespace WuGanhao.GitMirror.Command {
             }
 
             Console.WriteLine($"[{jobName}] Creating source link => {job.SourceUrl} ");
-            Uri sourceUri = new Uri(job.SourceUrl);
-            string schema = sourceUri.Scheme.ToUpperInvariant();
-            if (!string.IsNullOrEmpty(this.SourceToken) && (schema == "HTTP" || schema == "HTTPS")) {
-                sourceUri = new Uri($"{sourceUri.Scheme}://{this.SourceToken}@{sourceUri.Host}:{sourceUri.Port}{sourceUri.PathAndQuery}");
-            }
-            Remote source = repo.Remotes.Add("source", sourceUri.ToString(), true);
+            Uri sourceUri = job.SourceUrl == null ? null :new Uri(job.SourceUrl);
 
-            Console.WriteLine($"[{jobName}] Fetching from source repository...");
-            RemoteBranch sourceBranch = source.Branches[job.Branch];
-            if (sourceBranch == null) {
-                Console.WriteLine($"[{jobName}] Failed to find branch source: {job.Branch}...");
-                yield break;
-            }
-            await sourceBranch.FetchAsync();
+            if (sourceUri != null) { 
+                string schema = sourceUri.Scheme.ToUpperInvariant();
+                if (!string.IsNullOrEmpty(this.SourceToken) && (schema == "HTTP" || schema == "HTTPS")) {
+                    sourceUri = new Uri($"{sourceUri.Scheme}://{this.SourceToken}@{sourceUri.Host}:{sourceUri.Port}{sourceUri.PathAndQuery}");
+                }
+                Remote source = repo.Remotes.Add("source", sourceUri.ToString(), true);
 
-            // for sub-modules, need to check correct branch first.
-            if (job.Name != null) {
-                string targetBranchName = this.GetTargetBranch(job.Branch);
-                RemoteBranch targetBranch = origin.Branches[targetBranchName];
-                if (targetBranch != null) { // Could be empty when syncing for first time.
-                    await targetBranch.FetchAsync();
-                    Console.WriteLine($"[{jobName}] Checking out branch: {targetBranch} ...");
-                    await repo.CheckoutAsync(targetBranch, true);
+                Console.WriteLine($"[{jobName}] Fetching from source repository...");
+                RemoteBranch sourceBranch = source.Branches[job.Branch];
+                if (sourceBranch == null) {
+                    Console.WriteLine($"[{jobName}] Failed to find branch source: {job.Branch}...");
+                    yield break;
+                }
+                await sourceBranch.FetchAsync();
 
-                    Console.WriteLine($"[{jobName}] Merging from branch: {sourceBranch} ...");
+                // for sub-modules, need to check correct branch first.
+                if (job.Name != null) {
+                    string targetBranchName = this.GetTargetBranch(job.Branch);
+                    RemoteBranch targetBranch = origin.Branches[targetBranchName];
+                    if (targetBranch != null) { // Could be empty when syncing for first time.
+                        await targetBranch.FetchAsync();
+                        Console.WriteLine($"[{jobName}] Checking out branch: {targetBranch} ...");
+                        await repo.CheckoutAsync(targetBranch, true);
+
+                        Console.WriteLine($"[{jobName}] Merging from branch: {sourceBranch} ...");
+                        if (sourceBranch == null) {
+                            throw new InvalidOperationException($"[{jobName}] Failed to find remote branch on source: {sourceBranch}");
+                        }
+                        await repo.MergeAsync(sourceBranch, true);
+                        await repo.PushAsync(origin, targetBranchName);
+                    }
+                } else {
+                    string targetBranchName = this.GetTargetBranch(job.Branch);
+                    Console.WriteLine($"[{jobName}] Merging branch: {targetBranchName} ...");
                     if (sourceBranch == null) {
-                        throw new InvalidOperationException($"[{jobName}] Failed to find remote branch on source: {sourceBranch}");
+                        throw new InvalidOperationException($"[{jobName}] Failed to find remote branch on target: {job.Branch}");
+                    }
+                    RemoteBranch targetBranch = origin.Branches[targetBranchName];
+                    if (targetBranch != null) {
+                        await targetBranch.PullAsync();
                     }
                     await repo.MergeAsync(sourceBranch, true);
                     await repo.PushAsync(origin, targetBranchName);
                 }
-            } else {
-                string targetBranchName = this.GetTargetBranch(job.Branch);
-                Console.WriteLine($"[{jobName}] Merging branch: {targetBranchName} ...");
-                if (sourceBranch == null) {
-                    throw new InvalidOperationException($"[{jobName}] Failed to find remote branch on target: {job.Branch}");
+
+                // Push for unmapped branches
+                Console.WriteLine($"[{jobName}] Create un-mapped branches ...");
+                RemoteBranch[] sourceBranches = source.Branches.Where<RemoteBranch>(b => BRANCH_PATTERN.IsMatch(b.Name)).ToArray();
+                RemoteBranch[] targetBranches = origin.Branches.Where<RemoteBranch>(b => sourceBranches.Select(b => this.GetTargetBranch(b.Name)).Contains(b.Name)).ToArray();
+                RemoteBranch[] unmappedBranches = sourceBranches.Where(b => !targetBranches.Any(t => t.Name == this.GetTargetBranch(b.Name))).ToArray();
+
+                if (unmappedBranches.Length > 0) {
+                    Console.WriteLine($"[{jobName}] Fetching branches from source: {string.Join(';', unmappedBranches.Select(b => b.Name))} ...");
+                    await source.FetchAsync(unmappedBranches);
+
+                    Console.WriteLine($"[{jobName}] Pushing branches to origin: {string.Join(';', unmappedBranches.Select(b => b.Name))} ...");
+                    await origin.PushAsync(unmappedBranches, (b) => this.GetTargetBranch(b.Name) );
                 }
-                RemoteBranch targetBranch = origin.Branches[targetBranchName];
-                if (targetBranch != null) {
-                    await targetBranch.PullAsync();
-                }
-                await repo.MergeAsync(sourceBranch, true);
-                await repo.PushAsync(origin, targetBranchName);
-            }
-
-            // Push for unmapped branches
-            Console.WriteLine($"[{jobName}] Create un-mapped branches ...");
-            RemoteBranch[] sourceBranches = source.Branches.Where<RemoteBranch>(b => BRANCH_PATTERN.IsMatch(b.Name)).ToArray();
-            RemoteBranch[] targetBranches = origin.Branches.Where<RemoteBranch>(b => sourceBranches.Select(b => this.GetTargetBranch(b.Name)).Contains(b.Name)).ToArray();
-            RemoteBranch[] unmappedBranches = sourceBranches.Where(b => !targetBranches.Any(t => t.Name == this.GetTargetBranch(b.Name))).ToArray();
-
-            if (unmappedBranches.Length > 0) {
-                Console.WriteLine($"[{jobName}] Fetching branches from source: {string.Join(';', unmappedBranches.Select(b => b.Name))} ...");
-                await source.FetchAsync(unmappedBranches);
-
-                Console.WriteLine($"[{jobName}] Pushing branches to origin: {string.Join(';', unmappedBranches.Select(b => b.Name))} ...");
-                await origin.PushAsync(unmappedBranches, (b) => this.GetTargetBranch(b.Name) );
             }
 
             // Check for submodules
