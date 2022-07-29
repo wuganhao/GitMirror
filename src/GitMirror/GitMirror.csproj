@@ -6,7 +6,7 @@
     <RootNamespace>WuGanhao.GitMirror</RootNamespace>
     <PackAsTool>True</PackAsTool>
     <PackageId>WuGanhao.GitMirror</PackageId>
-    <LangVersion>8.0</LangVersion>
+    <LangVersion>preview</LangVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)'=='Release'">

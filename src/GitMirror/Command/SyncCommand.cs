@@ -43,6 +43,9 @@ namespace WuGanhao.GitMirror.Command {
         [CommandOption("source-token", "t", "Access token for source repository if its from HTTP/HTTPS connection")]
         public string SourceToken { get; set; }
 
+        [CommandOption("target-token", "t", "Access token for target repository if its from HTTP/HTTPS connection")]
+        public string TargetToken { get; set; }
+
         [CommandOption("forced-prefix", "f", "Force a prefix in each merged branch in target repository")]
         public string Prefix { get; set; }
 
@@ -62,6 +65,15 @@ namespace WuGanhao.GitMirror.Command {
             if (sourceName.StartsWith($"{this.Prefix}/")) return sourceName;
 
             return string.Join('/', prefix, sourceName);
+        }
+
+        private Dictionary<string, string> TargetGitConfigs {
+            get {
+                if (this.TargetToken == null) return null;
+                return new Dictionary<string, string> {
+                    { "http.extraheader", $"AUTHORIZATION: {this.TargetToken}" }
+                };
+            }
         }
 
         /// <summary>
@@ -114,7 +126,7 @@ namespace WuGanhao.GitMirror.Command {
                             throw new InvalidOperationException($"[{jobName}] Failed to find remote branch on source: {sourceBranch}");
                         }
                         await repo.MergeAsync(sourceBranch, true);
-                        await repo.PushAsync(origin, targetBranchName);
+                        await repo.PushAsync(this.TargetGitConfigs, origin, targetBranchName);
                     }
                 } else {
                     string targetBranchName = this.GetTargetBranch(job.Branch);
@@ -127,7 +139,7 @@ namespace WuGanhao.GitMirror.Command {
                         await targetBranch.PullAsync();
                     }
                     await repo.MergeAsync(sourceBranch, true);
-                    await repo.PushAsync(origin, targetBranchName);
+                    await repo.PushAsync(this.TargetGitConfigs, origin, targetBranchName);
                 }
 
                 // Push for unmapped branches
@@ -141,7 +153,7 @@ namespace WuGanhao.GitMirror.Command {
                     await source.FetchAsync(unmappedBranches);
 
                     Console.WriteLine($"[{jobName}] Pushing branches to origin: {string.Join(';', unmappedBranches.Select(b => b.Name))} ...");
-                    await origin.PushAsync(unmappedBranches, (b) => this.GetTargetBranch(b.Name) );
+                    await origin.PushAsync(this.TargetGitConfigs, unmappedBranches, (b) => this.GetTargetBranch(b.Name) );
                 }
             }
 

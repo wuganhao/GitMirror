@@ -148,8 +148,8 @@ namespace WuGanhao.GitMirror.GitCommand {
                 string.Join(' ', branches.Select(b => $"{b.FullName}:refs/heads/{b.Name}")));
         }
 
-        public async Task PushAsync(RemoteBranch[] branches, Func<RemoteBranch, string> callbackGetRemoteName) {
-            await this.Repository.ShellAsync("push", this.Name,
+        public async Task PushAsync(Dictionary<string, string> config, RemoteBranch[] branches, Func<RemoteBranch, string> callbackGetRemoteName) {
+            await this.Repository.ShellAsync(config, "push", this.Name,
                 string.Join(' ', branches.Select(b => $"{b.FullName}:refs/heads/{callbackGetRemoteName(b)}")));
         }
 
@@ -337,14 +337,23 @@ namespace WuGanhao.GitMirror.GitCommand {
         private SubmoduleCollection _submodules;
         public SubmoduleCollection Submodules => this._submodules ??= new SubmoduleCollection(this);
 
-        public async Task<int> ShellAsync(string command, string args, bool ignoreExitcode = false) =>
-            await GitMirror.Shell.RunAsync("git", $"{command} {args}", this.BaseDirectory, ignoreExitcode);
+        public async Task<int> ShellAsync(params string[] args) {
+            return await GitMirror.Shell.RunAsync("git", string.Join(' ', args.Where(a => a != null)), this.BaseDirectory, false);
+        }
+        public async Task<int> ShellAsync(Dictionary<string, string> configs, params string[] args) {
+            List<string> options = new List<string>();
+            if (configs != null) {
+                foreach (var kvp in configs) {
+                    options.Add("-c");
+                    options.Add($"{kvp.Key}=\"{kvp.Value}\"");
+                }
+            }
+            options.AddRange(args);
+            return await GitMirror.Shell.RunAsync("git", string.Join(' ', options.Where(a => a != null)), this.BaseDirectory, false);
+        }
 
-        public async Task<int> ShellAsync(string command, params string[] args) =>
-            await this.ShellAsync(command, string.Join(' ', args.Where(a => a != null)));
-
-        public async Task<int> ShellAsync(bool ignoreExitcode, string command, params string[] args) =>
-            await this.ShellAsync(command, string.Join(' ', args.Where(a => a != null)), ignoreExitcode);
+        public async Task<int> ShellAsync(bool ignoreExitcode, params string[] args) =>
+            await GitMirror.Shell.RunAsync("git", string.Join(' ', args.Where(a => a != null)), this.BaseDirectory, ignoreExitcode);
 
         public int Shell(out string output, string command, params string[] args) {
             string arguments = string.Join(' ', args);
@@ -384,6 +393,11 @@ namespace WuGanhao.GitMirror.GitCommand {
         /// <param name="refs"></param>
         /// <returns></returns>
         public async Task PushAsync(Remote remote, string refs) => await this.ShellAsync("push", remote.Name, $"HEAD:refs/heads/{refs}");
+
+        public async Task PushAsync(Dictionary<string, string> configs, Remote remote, string refs) {
+            await this.ShellAsync(configs, "push", remote.Name, $"HEAD:refs/heads/{refs}");
+        }
+        
         public async Task CheckoutAsync(RemoteBranch originBranch, bool force = false) =>
             await this.ShellAsync("checkout", originBranch.FullName, force ? "--force" : null);
         public async Task CheckoutAsync(string branch, bool orphan = false) =>
