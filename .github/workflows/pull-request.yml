@@ -3,13 +3,9 @@ name: Pull Request
 on:
   pull_request:
     types: [assigned, opened, synchronize, reopened]
-  push:
-    branches-ignore:
-      - 'feature/*' # Ignore build feature branch on push; feature branches will be build only for pull requests.
-      - 'Feature/*'
 
 jobs:
-  build:
+  pull-request-build:
     runs-on: ubuntu-latest
 
     steps:
