@@ -5,7 +5,7 @@ on:
     types: [assigned, opened, synchronize, reopened]
 
 jobs:
-  build:
+  pull-request-build:
     runs-on: ubuntu-latest
 
     steps:
