@@ -2,9 +2,8 @@ name: Push Build
 
 on:
   push:
-    branches-ignore:
-      - 'feature/*' # Ignore build feature branch on push; feature branches will be build only for pull requests.
-      - 'Feature/*'
+    branches:
+      - master
 
 jobs:
   build:
