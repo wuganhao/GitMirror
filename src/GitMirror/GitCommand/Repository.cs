@@ -35,8 +35,8 @@ namespace WuGanhao.GitMirror.GitCommand {
             await this.Repository.ShellAsync("submodule", "init", this.Path);
         }
 
-        public async Task<int> UpdateAsync(bool init = false) =>
-            await this.Repository.ShellAsync(true, "submodule", "update", init ? "--init" : null, this.Path);
+        public async Task<int> UpdateAsync(Dictionary<string, string> config, bool init = false) =>
+            await this.Repository.ShellAsync(config, "submodule", "update", init ? "--init" : null, this.Path);
     }
 
     public class SubmoduleCollection : IEnumerable<Submodule> {
@@ -292,8 +292,7 @@ namespace WuGanhao.GitMirror.GitCommand {
             }
         }
 
-        public RemoteBranch this[string name] {
-            get {
+        public RemoteBranch Get(string name, Dictionary<string, string> config) {
                 this.Repository.Shell(out string[] lines, "ls-remote", this.Remote.Name, name);
                 lines = lines.Where(l => !string.IsNullOrWhiteSpace(l)).ToArray();
                 if (lines.Length <= 0) {
@@ -313,7 +312,6 @@ namespace WuGanhao.GitMirror.GitCommand {
                 if (branchName == null) return null;
 
                 return new RemoteBranch(this.Repository, this.Remote, name);
-            }
         }
     }
 
@@ -363,6 +361,20 @@ namespace WuGanhao.GitMirror.GitCommand {
         public int Shell(out string[] lines, string command, params string[] args) {
             string arguments = string.Join(' ', args);
             return GitMirror.Shell.Run("git", $"{command} {arguments}", out lines, this.BaseDirectory);
+        }
+
+        public int Shell(out string[] lines, Dictionary<string, string> config, string command, params string[] args) {
+            List<string> options = new List<string>();
+            if (config != null) {
+                foreach (var kvp in config) {
+                    options.Add("-c");
+                    options.Add($"{kvp.Key}=\"{kvp.Value}\"");
+                }
+            }
+            options.Add(command);
+            options.AddRange(args);
+            string arguments = string.Join(' ', options);
+            return GitMirror.Shell.Run("git", arguments, out lines, this.BaseDirectory);
         }
 
         public int Shell(string command, params string[] args) {
