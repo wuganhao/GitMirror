@@ -293,7 +293,7 @@ namespace WuGanhao.GitMirror.GitCommand {
         }
 
         public RemoteBranch Get(string name, Dictionary<string, string> config) {
-                this.Repository.Shell(out string[] lines, "ls-remote", this.Remote.Name, name);
+                this.Repository.Shell(out string[] lines, config, "ls-remote", this.Remote.Name, name);
                 lines = lines.Where(l => !string.IsNullOrWhiteSpace(l)).ToArray();
                 if (lines.Length <= 0) {
                     return null;
