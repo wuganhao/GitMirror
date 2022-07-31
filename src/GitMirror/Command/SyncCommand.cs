@@ -79,7 +79,7 @@ namespace WuGanhao.GitMirror.Command {
 
         private Dictionary<string, string> SourceGitConfig {
             get {
-                if (this.TargetToken == null) return null;
+                if (this.SourceToken == null) return null;
                 return new Dictionary<string, string> {
                     { "http.extraheader", $"AUTHORIZATION: {this.SourceToken}" },
                     { "http.sslVerify", "false" }
@@ -109,10 +109,6 @@ namespace WuGanhao.GitMirror.Command {
             Uri sourceUri = job.SourceUrl == null ? null :new Uri(job.SourceUrl);
 
             if (sourceUri != null) { 
-                string schema = sourceUri.Scheme.ToUpperInvariant();
-                if (!string.IsNullOrEmpty(this.SourceToken) && (schema == "HTTP" || schema == "HTTPS")) {
-                    sourceUri = new Uri($"{sourceUri.Scheme}://{this.SourceToken}@{sourceUri.Host}:{sourceUri.Port}{sourceUri.PathAndQuery}");
-                }
                 Remote source = repo.Remotes.Add("source", sourceUri.ToString(), true);
 
                 Console.WriteLine($"[{jobName}] Fetching from source repository...");
