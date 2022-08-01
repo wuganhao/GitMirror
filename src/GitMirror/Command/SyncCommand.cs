@@ -43,6 +43,9 @@ namespace WuGanhao.GitMirror.Command {
         [CommandOption("source-token", "t", "Access token for source repository if its from HTTP/HTTPS connection")]
         public string SourceToken { get; set; }
 
+        [CommandOption("source-token-type", "t", "Access token type for source repository if its from HTTP/HTTPS connection (Default to bearer)")]
+        public string SourceTokenType { get; set; }
+
         [CommandOption("target-token", "t", "Access token for target repository if its from HTTP/HTTPS connection")]
         public string TargetToken { get; set; }
 
@@ -71,7 +74,7 @@ namespace WuGanhao.GitMirror.Command {
             get {
                 if (this.TargetToken == null) return null;
                 return new Dictionary<string, string> {
-                    { "http.extraheader", $"AUTHORIZATION: {this.TargetToken}" },
+                    { "http.extraheader", $"AUTHORIZATION: bearer {this.TargetToken}" },
                     { "http.sslVerify", "false" }
                 };
             }
@@ -81,7 +84,7 @@ namespace WuGanhao.GitMirror.Command {
             get {
                 if (this.SourceToken == null) return null;
                 return new Dictionary<string, string> {
-                    { "http.extraheader", $"AUTHORIZATION: {this.SourceToken}" },
+                    { "http.extraheader", $"AUTHORIZATION: {this.SourceTokenType} {this.SourceToken}" },
                     { "http.sslVerify", "false" }
                 };
             }
