@@ -169,8 +169,8 @@ namespace WuGanhao.GitMirror.GitCommand {
             await this.Repository.ShellAsync("fetch", this.Name, string.Join(' ', branches.Select(b => $"refs/heads/{b.Name}")) );
         }
 
-        public async Task FetchAsync(string refs) {
-            await this.Repository.FetchAsync(this.Name, refs);
+        public async Task FetchAsync(string refs, Dictionary<string, string> config = null) {
+            await this.Repository.FetchAsync(config, this.Name, refs);
         }
     }
 
@@ -232,8 +232,8 @@ namespace WuGanhao.GitMirror.GitCommand {
         public Remote Remote { get; }
         public string FullName => $"refs/remotes/{this.Remote.Name}/{this.Name}";
 
-        public async Task FetchAsync() {
-            await this.Repository.FetchAsync(this.Remote.Name, $"refs/heads/{this.Name}");
+        public async Task FetchAsync(Dictionary<string, string> config = null) {
+            await this.Repository.FetchAsync(config, this.Remote.Name, $"refs/heads/{this.Name}");
         }
 
         public async Task PullAsync() {
@@ -389,7 +389,7 @@ namespace WuGanhao.GitMirror.GitCommand {
                 allowUnrelatedHistories ? "--allow-unrelated-histories" : "--no-allow-unrelated-histories",
                 $"remotes/{remoteBranch.Remote.Name}/{remoteBranch.Name}");
 
-        public async Task FetchAsync(string remote, string refs) => await this.ShellAsync("fetch", remote, refs);
+        public async Task FetchAsync(Dictionary<string, string> config, string remote, string refs) => await this.ShellAsync(config, "fetch", remote, refs);
         public async Task FetchAsync(string remote) => await this.ShellAsync("fetch", remote);
 
         public async Task PullAsync(string remote, string refs) => await this.ShellAsync("pull", remote, refs);

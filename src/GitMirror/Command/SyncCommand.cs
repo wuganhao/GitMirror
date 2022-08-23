@@ -120,14 +120,14 @@ namespace WuGanhao.GitMirror.Command {
                     Console.WriteLine($"[{jobName}] Failed to find branch source: {job.Branch}...");
                     yield break;
                 }
-                await sourceBranch.FetchAsync();
+                await sourceBranch.FetchAsync(this.SourceGitConfig);
 
                 // for sub-modules, need to check correct branch first.
                 if (job.Name != null) {
                     string targetBranchName = this.GetTargetBranch(job.Branch);
                     RemoteBranch targetBranch = target.Branches.Get(targetBranchName, this.TargetGitConfig);
                     if (targetBranch != null) { // Could be empty when syncing for first time.
-                        await targetBranch.FetchAsync();
+                        await targetBranch.FetchAsync(this.TargetGitConfig);
                         Console.WriteLine($"[{jobName}] Checking out branch: {targetBranch} ...");
                         await repo.CheckoutAsync(targetBranch, true);
 
