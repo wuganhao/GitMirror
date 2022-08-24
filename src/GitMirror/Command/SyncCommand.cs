@@ -160,7 +160,7 @@ namespace WuGanhao.GitMirror.Command {
 
                 if (unmappedBranches.Length > 0) {
                     Console.WriteLine($"[{jobName}] Fetching branches from source: {string.Join(';', unmappedBranches.Select(b => b.Name))} ...");
-                    await source.FetchAsync(unmappedBranches);
+                    await source.FetchAsync(this.SourceGitConfig, unmappedBranches);
 
                     Console.WriteLine($"[{jobName}] Pushing branches to origin: {string.Join(';', unmappedBranches.Select(b => b.Name))} ...");
                     await target.PushAsync(this.TargetGitConfig, unmappedBranches, (b) => this.GetTargetBranch(b.Name) );

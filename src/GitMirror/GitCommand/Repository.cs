@@ -160,13 +160,16 @@ namespace WuGanhao.GitMirror.GitCommand {
             await this.Repository.FetchAsync(this.Name);
         }
 
-        public async Task FetchAsync(params RemoteBranch[] branches) {
+        public async Task FetchAsync(params RemoteBranch[] branches) => await this.FetchAsync(null, branches);
+
+        public async Task FetchAsync(Dictionary<string, string> config, params RemoteBranch[] branches) {
             RemoteBranch other = branches.FirstOrDefault(b => b.Remote.Name != this.Name);
-            if (other != null) {
+            if (other != null)
+            {
                 throw new InvalidOperationException($"Branch {other} is not from current remote");
             }
 
-            await this.Repository.ShellAsync("fetch", this.Name, string.Join(' ', branches.Select(b => $"refs/heads/{b.Name}")) );
+            await this.Repository.ShellAsync(config, "fetch", this.Name, string.Join(' ', branches.Select(b => $"refs/heads/{b.Name}")));
         }
 
         public async Task FetchAsync(string refs, Dictionary<string, string> config = null) {
