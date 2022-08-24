@@ -115,7 +115,7 @@ namespace WuGanhao.GitMirror.Command {
                 Remote source = repo.Remotes.Add("source", sourceUri.ToString(), true);
 
                 Console.WriteLine($"[{jobName}] Fetching from source repository...");
-                RemoteBranch sourceBranch = source.Branches.Get(job.Branch, this.SourceGitConfig);
+                RemoteBranch sourceBranch = source.GetBranches(SourceGitConfig).Get(job.Branch, this.SourceGitConfig);
                 if (sourceBranch == null) {
                     Console.WriteLine($"[{jobName}] Failed to find branch source: {job.Branch}...");
                     yield break;
@@ -125,7 +125,7 @@ namespace WuGanhao.GitMirror.Command {
                 // for sub-modules, need to check correct branch first.
                 if (job.Name != null) {
                     string targetBranchName = this.GetTargetBranch(job.Branch);
-                    RemoteBranch targetBranch = target.Branches.Get(targetBranchName, this.TargetGitConfig);
+                    RemoteBranch targetBranch = target.GetBranches(TargetGitConfig).Get(targetBranchName, this.TargetGitConfig);
                     if (targetBranch != null) { // Could be empty when syncing for first time.
                         await targetBranch.FetchAsync(this.TargetGitConfig);
                         Console.WriteLine($"[{jobName}] Checking out branch: {targetBranch} ...");
@@ -144,7 +144,7 @@ namespace WuGanhao.GitMirror.Command {
                     if (sourceBranch == null) {
                         throw new InvalidOperationException($"[{jobName}] Failed to find remote branch on target: {job.Branch}");
                     }
-                    RemoteBranch targetBranch = target.Branches.Get(targetBranchName, this.TargetGitConfig);
+                    RemoteBranch targetBranch = target.GetBranches(TargetGitConfig).Get(targetBranchName, this.TargetGitConfig);
                     if (targetBranch != null) {
                         await targetBranch.PullAsync();
                     }
@@ -154,8 +154,8 @@ namespace WuGanhao.GitMirror.Command {
 
                 // Push for unmapped branches
                 Console.WriteLine($"[{jobName}] Create un-mapped branches ...");
-                RemoteBranch[] sourceBranches = source.Branches.Where<RemoteBranch>(b => BRANCH_PATTERN.IsMatch(b.Name)).ToArray();
-                RemoteBranch[] targetBranches = target.Branches.Where<RemoteBranch>(b => sourceBranches.Select(b => this.GetTargetBranch(b.Name)).Contains(b.Name)).ToArray();
+                RemoteBranch[] sourceBranches = source.GetBranches(SourceGitConfig).Where<RemoteBranch>(b => BRANCH_PATTERN.IsMatch(b.Name)).ToArray();
+                RemoteBranch[] targetBranches = target.GetBranches(TargetGitConfig).Where<RemoteBranch>(b => sourceBranches.Select(b => this.GetTargetBranch(b.Name)).Contains(b.Name)).ToArray();
                 RemoteBranch[] unmappedBranches = sourceBranches.Where(b => !targetBranches.Any(t => t.Name == this.GetTargetBranch(b.Name))).ToArray();
 
                 if (unmappedBranches.Length > 0) {

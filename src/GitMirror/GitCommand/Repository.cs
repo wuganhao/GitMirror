@@ -154,7 +154,7 @@ namespace WuGanhao.GitMirror.GitCommand {
         }
 
         private RemoteBranchCollection _branches;
-        public RemoteBranchCollection Branches => this._branches ??= new RemoteBranchCollection(this.Repository, this);
+        public RemoteBranchCollection GetBranches(Dictionary<string, string> config) => this._branches ??= new RemoteBranchCollection(this.Repository, this, config);
 
         public async Task FetchAsync() {
             await this.Repository.FetchAsync(this.Name);
@@ -263,15 +263,17 @@ namespace WuGanhao.GitMirror.GitCommand {
     }
 
     public class RemoteBranchCollection: BranchCollection, IEnumerable<RemoteBranch> {
-        public RemoteBranchCollection(Repository repo, Remote remote)
+        public RemoteBranchCollection(Repository repo, Remote remote, Dictionary<string, string> config)
             : base(repo) {
+            _config = config;
             this.Remote = remote;
         }
 
+        private Dictionary<string, string> _config;
         public Remote Remote { get; }
 
         public override IEnumerator<Branch> GetEnumerator() {
-            this.Repository.Shell(out string[] lines, "ls-remote", this.Remote.Name);
+            this.Repository.Shell(out string[] lines, _config, "ls-remote", this.Remote.Name);
             foreach (string line in lines) {
                 if (string.IsNullOrEmpty(line)) continue;
                 string[] fields = line.Split(new char[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
