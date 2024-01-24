@@ -43,10 +43,10 @@ namespace WuGanhao.GitMirror.Command {
         [CommandOption("source-token", "t", "Access token for source repository if its from HTTP/HTTPS connection")]
         public string SourceToken { get; set; }
 
-        [CommandOption("source-token-type", "t", "Access token type for source repository if its from HTTP/HTTPS connection (Default to bearer)")]
-        public string SourceTokenType { get; set; }
+        [CommandOption("source-token-type", "t", "Access token type for source repository if its from HTTP/HTTPS connection (Default to Bearer)")]
+        public string SourceTokenType { get; set; } = "Bearer"
 
-        [CommandOption("target-token", "t", "Access token for target repository if its from HTTP/HTTPS connection")]
+        [CommandOption("target-token", "t", "Access token for target repository if its from HTTP/HTTPS connection (Default to Bearer")]
         public string TargetToken { get; set; }
 
         [CommandOption("forced-prefix", "f", "Force a prefix in each merged branch in target repository")]
